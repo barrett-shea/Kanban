@@ -1,10 +1,9 @@
 import React, {useState} from "react";
 import {Form, Button, Container} from 'react-bootstrap'
 import { v4 as uuidv4 } from 'uuid';
-import { database, firestore } from "../../firebase"
+import { database } from "../../firebase"
 
-
-export default function AddTask ({ state, setState, currentUser }) {
+export default function AddTask ({ state, setState }) {
   
   const [value, setValue] = useState('')
   
@@ -33,23 +32,9 @@ export default function AddTask ({ state, setState, currentUser }) {
           [newToDo.id]: newToDo, 
         } 
       } 
-    
+
     setState(newState)
-    
-    //create new task
-    firestore.collection("users").doc(currentUser.uid).collection("tasks").doc(id)
-      .set({
-        id : id,   
-        content: value,
-        userId: currentUser.uid,
-        createdAt:  database.getCurrentTimestamp()
-      })
-    
-    //add to column1
-    firestore.collection("users").doc(currentUser.uid).collection("columns").doc('column1')
-      .update({taskIds: newTaskIds})
-
-
+    //update firestore
     setValue('') // cleanup input
     }
   }
