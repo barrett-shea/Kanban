@@ -1,11 +1,12 @@
 import React from 'react'
 import {Draggable} from 'react-beautiful-dnd'
 import {Button} from 'react-bootstrap'
+import { database, firestore } from "../../firebase"
 
-export default function Task({ task, index, columnDetails, state, setState }) {
+export default function Task({ task, index, columnDetails, state, setState, currentUser }) {
   // task = state.tasks['task1'] 
   // index = index of task in a column. Changes when moved.
-  
+
   function handleRemove(e) {
     e.preventDefault()
     //Step 1: remove task from column.taskIds (remove from screen)
@@ -29,6 +30,13 @@ export default function Task({ task, index, columnDetails, state, setState }) {
     }
     
     setState(newState)
+    
+    //remove from column
+    firestore.collection("users").doc(currentUser.uid).collection("columns").doc(columnDetails.id)
+      .update({taskIds: updateColumnIds})
+
+    //remove task from database
+    firestore.collection("users").doc(currentUser.uid).collection("tasks").doc(task.id).delete()
   }
   
   return (

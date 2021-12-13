@@ -1,21 +1,22 @@
 import React, {useState} from "react";
 import Column from './Column' 
 import {DragDropContext} from 'react-beautiful-dnd'
-import InitialData from './InitialData'
 import AddTask from './AddTask'
 import TaskCounter from './TaskCounter'
+import useData from '../hooks/useData'
+import { useAuth } from "../../Contexts/AuthContext"
+import { database, firestore } from "../../firebase"
+import { Spinner } from 'react-bootstrap'
 
-
-export default function Dnd() {
+const Dnd = () => {
+  const {currentUser} = useAuth()
   
-  const [state, setState] = useState(InitialData)
+  const {state, setState} = useData(currentUser)
   
   const onDragEnd = result => {     //used to persist new order after drag
     const {destination, source, draggableId} = result
 
-    if (!destination) {
-      return
-    }
+    if (!destination) return
 
     if (
       result.destination.droppableId === result.source.droppableId &&
@@ -49,11 +50,16 @@ export default function Dnd() {
         }, //since only 1 column, InitialData.columnOrder is not updated in newState
       } 
     
-    
-        setState(newState)
-// Save updated state (list order) to database here
-        return
-      } 
+      setState(newState)
+      
+      
+      
+      firestore.collection("users").doc(currentUser.uid).collection("columns").doc(start.id)
+        .update({taskIds: newTaskIds})
+      return
+      
+    } 
+
 
     //Moving from one column to another
     const startTaskIds = Array.from(start.taskIds)
@@ -80,10 +86,19 @@ export default function Dnd() {
     }
 
     setState(newState)
+    
+    firestore.collection("users").doc(currentUser.uid).collection("columns")
+      .doc(newStart.id).update({taskIds: startTaskIds})
+
+    firestore.collection("users").doc(currentUser.uid).collection("columns")
+      .doc(newFinish.id).update({taskIds: finishTaskIds})
   };
 
   return (
   <>
+  {state ?
+    (
+    <>
   <TaskCounter state={state}/>
   <DragDropContext onDragEnd={onDragEnd}>
       <div className='d-flex'>
@@ -91,11 +106,18 @@ export default function Dnd() {
           const column= state.columns[columnId];
           const tasks= column.taskIds.map(taskId=> state.tasks[taskId]);
 
-        return <Column key={column.id} column={column} tasks={tasks} state={state} setState={setState}/>
+        return <Column key={column.id} column={column} tasks={tasks} state={state} setState={setState} currentUser={currentUser}/>
         })}
       </div>
     </DragDropContext>
-    <AddTask state={state} setState={setState}/>
+    <AddTask state={state} setState={setState} currentUser={currentUser}/>
   </>
   )
+  :
+  <Spinner animation="border" variant="primary"/>
 }
+</>
+  )
+}
+
+export default Dnd
