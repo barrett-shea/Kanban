@@ -1,6 +1,5 @@
 import React, { useContext, useState, useEffect } from "react"
-import { auth } from "../firebase"
-import createBoard from '../Components/Dnd/InitialData'
+import { auth, firestore, database } from "../firebase"
 
 const AuthContext = React.createContext()
 
@@ -14,6 +13,16 @@ export function AuthProvider({ children }) {
 
   function signup(email, password) {
     return auth.createUserWithEmailAndPassword(email, password)
+    .then(function(user) {
+      const id = user.uid
+      firestore.collection("users").doc(id).set({
+        createdAt: database.getCurrentTimestamp() 
+      })      
+    })
+    .catch(function(error) {
+      var errorCode = error.code 
+      var errorMessage = error.mesage 
+    })
   }
 
   function login(email, password) {
